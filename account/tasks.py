@@ -5,11 +5,10 @@ from forum._celery import app
 
 @app.task
 def send_activation_code(email, activation_code):
-    activation_url = f'http://localhost:8000/api/v1/activate/{activation_code}'
     message = f"""
-        Thank you for signing up.
-        Please, activate your account.
-        Activation link: {activation_url}
+        Hey, crypto enthusiast!
+        Thank you for joining our forum. 
+        Please, activate your account with this code {activation_code}.
     """
     send_mail(
         'Activate your account',

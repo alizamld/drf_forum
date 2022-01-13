@@ -28,3 +28,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = MyUser.objects.create_user(email=email, password=password)
         send_activation_code.delay(email=user.email, activation_code=str(user.activation_code))
         return user
+
+
+class ActivationSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=6, min_length=6, required=True)
+
+    def validate_code(self, code):
+        if not User.objects.filter(activation_code=code).exists():
+            return serializers.ValidationError('Пользователь не найден')
+        return code
+
+    def activate(self):
+        code = self.validated_data.get('code')
+        user = User.objects.get(activation_code=code)
+        user.is_active = True
+        user.activation_code = ''
+        user.save()
