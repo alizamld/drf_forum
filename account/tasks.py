@@ -18,3 +18,16 @@ def send_activation_code(email, activation_code):
         fail_silently=False
     )
 
+
+@app.task
+def send_activation_code_forgot_pass(email, activation_code):
+    message = f"""
+        Please, reset your password with this code {activation_code}.
+    """
+    send_mail(
+        'Reset password',
+        message,
+        'test@test.com',
+        [email, ],
+        fail_silently=False
+    )

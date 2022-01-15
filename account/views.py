@@ -37,3 +37,33 @@ class LogoutView(APIView):
         # auth_token через related name удалили
         user.auth_token.delete()
         return Response('You have successfully logged out.')
+
+
+class ChangePassword(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        serializer = ChangePasswordSerializer(data=data,
+                                              context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.set_new_pass()
+        return Response('You have updated your password')
+
+
+class ForgotPassword(APIView):
+    def post(self, request):
+        data = request.data
+        serializer = ForgotPasswordSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.send_code()
+        return Response('Code was sent to your email.')
+
+
+class ForgotPasswordCompleteView(APIView):
+    def post(self, request):
+        data = request.data
+        serializer = ForgotPasswordCompleteSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.set_new_pass()
+        return Response('You have reset your password.')
