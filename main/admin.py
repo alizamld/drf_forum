@@ -12,3 +12,7 @@ class PostImageInline(admin.TabularInline):
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     inlines = [PostImageInline, ]
+
+
+admin.site.register(Category)
+admin.site.register(Comment)
