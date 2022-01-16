@@ -52,7 +52,7 @@ class Comment(models.Model):
 class Likes(models.Model):
     likes = models.BooleanField(default=False)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='likes')
 
     def __str__(self):
         return str(self.likes)

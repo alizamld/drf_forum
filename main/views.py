@@ -131,7 +131,6 @@ class PostViewSet(ModelViewSet):
             obj.favorite = not obj.favorite
             obj.save()
         favorites = 'added to favorites' if obj.favorite else 'removed from favorites'
-
         return Response(f'Successfully {favorites}', status=status.HTTP_200_OK)
 
 
@@ -167,4 +166,4 @@ class UpdateDeleteComment(UpdateModelMixin, DestroyModelMixin, GenericAPIView):
 class LikesViewSet(ModelViewSet):
     queryset = Likes.objects.all()
     serializer_class = LikesSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, ]

@@ -1,4 +1,3 @@
-from django.db.models import Avg
 from rest_framework import serializers
 from .models import *
 
@@ -26,6 +25,23 @@ class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id', 'title', 'description', 'images']
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        exclude = ('user', 'post')
+
+    def create(self, validated_data):
+        # мы можем отправлять from view to serializer через context
+        # request отправляет юзер, его мы получаем в request.user
+        request = self.context.get('request')
+        user = request.user
+        post = self.context.get('post')
+        # чтобы ошибки не было, мы должны взять пользователя, так как в fields мы его не заполняли
+        validated_data['user'] = user
+        validated_data['post'] = post
+        return super().create(validated_data)
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -59,9 +75,8 @@ class PostSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['images'] = PostImageSerializer(instance.images.all(), many=True).data
-        # representation['comments'] = CommentSerializer(instance.comments.all(), many=True).data
+        representation['comments'] = CommentSerializer(instance.comments.all(), many=True).data
         representation['likes'] = instance.likes.all().count()
-        # representation['rating'] = instance.rating.aggregate(Avg('rating')).get("rating_avg")
         return representation
 
 
@@ -71,25 +86,8 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        exclude = ('user', 'post')
-
-    def create(self, validated_data):
-        # мы можем отправлять from view to serializer через context
-        # request отправляет юзер, его мы получаем в request.user
-        request = self.context.get('request')
-        user = request.user
-        post = self.context.get('post')
-        # чтобы ошибки не было, мы должны взять пользователя, так как в fields мы его не заполняли
-        validated_data['user'] = user
-        validated_data['post'] = post
-        return super().create(validated_data)
-
-
 class LikesSerializer(serializers.ModelSerializer):
-    author = serializers.ReadOnlyField(source='author.email')
+    user = serializers.ReadOnlyField(source='user.email')
 
     class Meta:
         model = Likes
@@ -97,9 +95,9 @@ class LikesSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get('request')
-        author = request.user
+        user = request.user
         post = validated_data.get('post')
-        like = Likes.objects.get_or_create(author=author, post=post)[0]
+        like = Likes.objects.get_or_create(user=user, post=post)[0]
         like.likes = True if like.likes is False else False
         like.save()
         return like
