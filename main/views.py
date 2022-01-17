@@ -1,15 +1,14 @@
+from datetime import timedelta
 from django.db.models import Q
-from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-# from main.filters import PostFilter
 from main.models import *
 from main.permissions import IsAuthor
 from main.serializers import *
@@ -17,9 +16,6 @@ from main.serializers import *
 
 class PostViewSet(ModelViewSet):
     queryset = Post.objects.all()
-    # filter_backends = [SearchFilter, DjangoFilterBackend]
-    # search_fields = ['title', 'description', 'category__name']
-    # # filterset_class = PostFilter
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -35,9 +31,6 @@ class PostViewSet(ModelViewSet):
             return []
         return [IsAuthor()]
 
-    # elif self.action in ['partial_update', 'update', 'destroy', 'delete']:
-    #     return [IsAuthor()]
-
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         images = data.pop('images', [])
@@ -47,6 +40,21 @@ class PostViewSet(ModelViewSet):
         for image in images:
             PostImage.objects.create(post=post, image=image)
         return Response(serializer.data, status=201)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        days_count = int(self.request.query_params.get('days', 0))
+        if days_count > 0:
+            start_date = timezone.now() - timedelta(days=days_count)
+            queryset = queryset.filter(created_at__gte=start_date)
+        return queryset
+
+    @action(detail=False, methods=['GET'])
+    def own(self, request, pk=None):
+        queryset = self.get_queryset()
+        queryset = queryset.filter(user=request.user)
+        serializer = PostSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['GET'])
     def search(self, request):
@@ -97,7 +105,6 @@ class PostViewSet(ModelViewSet):
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    # filterset_class = CommentFilter
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
