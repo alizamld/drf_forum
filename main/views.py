@@ -66,7 +66,6 @@ class PostViewSet(ModelViewSet):
         serializer = PostSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # чтобы привязать к какому-то пути (api/v1/products/pk/reviews/) (по дефолту по названию метода -> путь)
     # отзывы получаем через детали (определенный продукт, после нажатия на продукт видим отзывы), поэтому True
     @action(['GET', 'POST'], detail=True)
     def comments(self, request, pk=None):
